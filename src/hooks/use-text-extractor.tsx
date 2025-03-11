@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { createWorker } from "tesseract.js";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +21,15 @@ export const useTextExtractor = () => {
     resetResults();
     
     try {
-      const worker = await createWorker('eng');
+      // Initialize the worker with proper options object
+      const worker = await createWorker({
+        logger: m => console.log(m),
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+      });
+      
+      // Load and initialize with English language
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
       
       toast({
         title: "Processing image",
