@@ -95,6 +95,33 @@ const Index = () => {
                       isExtracting={isExtracting}
                     />
                     
+                    {/* Display potential matches */}
+                    {matchedRecipients.length > 0 && !isExtracting && (
+                      <div className="mt-4">
+                        <h3 className="text-sm font-medium text-gray-700 mb-2">Potential Matches:</h3>
+                        <div className="bg-white rounded-md border border-gray-200 divide-y">
+                          {matchedRecipients.map((recipient, index) => (
+                            <button
+                              key={index}
+                              className={cn(
+                                "w-full px-4 py-2 flex items-center text-left hover:bg-blue-50 transition-colors",
+                                selectedRecipient === recipient && "bg-blue-50"
+                              )}
+                              onClick={() => handleSelectRecipient(recipient)}
+                            >
+                              <User className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                              <span className="flex-grow">{recipient}</span>
+                              {selectedRecipient === recipient && (
+                                <span className="flex-shrink-0 ml-2">
+                                  <Check className="h-4 w-4 text-green-500" />
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     {matchedRecipients.length > 0 && (
                       <div className="mt-3 text-sm text-gray-600">
                         Found {matchedRecipients.length} potential matches
