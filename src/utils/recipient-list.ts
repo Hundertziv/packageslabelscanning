@@ -132,6 +132,6 @@ export const findBestRecipientMatch = (extractedText: string): string[] => {
     // Sort by match score in descending order
     .sort((a, b) => b.matchScore - a.matchScore)
     // Take the top 5 matches
-    .slice(0, 5)
+    .slice(0, 10)
     .map(match => match.recipient);
 };
