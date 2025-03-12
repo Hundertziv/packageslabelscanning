@@ -102,6 +102,7 @@ export const recipientList = [
   "Ellen Johnson",
   "Ellen Williams",
   "Ellen Carter",
+  "Ellen Battaglia",
   "Judith Diaz",
   "Terry West",
   "Christina Cole"
