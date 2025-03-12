@@ -11,9 +11,11 @@ import ImageUploader from "@/components/ImageUploader";
 import { useTextExtractor } from "@/hooks/use-text-extractor";
 import ResultDisplay from "@/components/ResultDisplay";
 import Navbar from "@/components/Navbar";
+import SearchBar from "@/components/SearchBar";
 
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [selectedRecipient, setSelectedRecipient] = useState<string>("");
   const { toast } = useToast();
   const { 
     extractText, 
@@ -21,26 +23,20 @@ const Index = () => {
     extractedText, 
     recipientName, 
     apartment, 
+    matchedRecipients,
+    searchQuery,
+    filterRecipients,
     resetResults 
   } = useTextExtractor();
 
-  const handleImageUpload = (imageUrl: string) => {
+  const handleImageUpload = async (imageUrl: string) => {
     setUploadedImage(imageUrl);
     resetResults();
-  };
-
-  const handleAnalyzeClick = async () => {
-    if (!uploadedImage) {
-      toast({
-        title: "No image selected",
-        description: "Please upload a package label image first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    setSelectedRecipient("");
+    
+    // Automatically extract text when image is uploaded
     try {
-      await extractText(uploadedImage);
+      await extractText(imageUrl);
     } catch (error) {
       toast({
         title: "Extraction failed",
@@ -50,6 +46,14 @@ const Index = () => {
     }
   };
 
+  const handleSelectRecipient = (recipient: string) => {
+    setSelectedRecipient(recipient);
+    toast({
+      title: "Recipient selected",
+      description: `Selected recipient: ${recipient}`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Navbar />
@@ -57,8 +61,7 @@ const Index = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-blue-600 mb-3">Package Label Analyzer</h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Upload a package label image to extract the recipient's name and apartment number 
-            using advanced OCR technology.
+            Upload a package label image to extract the recipient's information and find matches in our database.
           </p>
         </div>
 
@@ -76,24 +79,29 @@ const Index = () => {
             <CardContent>
               <ImageUploader onImageUpload={handleImageUpload} />
               
-              <div className="mt-6 flex justify-center">
-                <Button 
-                  onClick={handleAnalyzeClick} 
-                  disabled={!uploadedImage || isExtracting}
-                  className="w-full max-w-xs"
-                >
-                  {isExtracting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Analyze Label
-                    </>
-                  )}
-                </Button>
+              <div className="mt-6">
+                {isExtracting ? (
+                  <div className="flex items-center justify-center gap-2 py-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                    <span className="text-sm text-blue-700">Analyzing label...</span>
+                  </div>
+                ) : (
+                  <div className="mt-4">
+                    <SearchBar
+                      matchedRecipients={matchedRecipients}
+                      searchQuery={searchQuery}
+                      onSearch={filterRecipients}
+                      onSelect={handleSelectRecipient}
+                      isExtracting={isExtracting}
+                    />
+                    
+                    {matchedRecipients.length > 0 && (
+                      <div className="mt-3 text-sm text-gray-600">
+                        Found {matchedRecipients.length} potential matches
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -105,13 +113,15 @@ const Index = () => {
                 Extraction Results
               </CardTitle>
               <CardDescription>
-                Recipient details extracted from the label
+                {selectedRecipient 
+                  ? `Selected recipient: ${selectedRecipient}`
+                  : "Recipient details extracted from the label"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ResultDisplay 
                 extractedText={extractedText}
-                recipientName={recipientName}
+                recipientName={selectedRecipient || recipientName}
                 apartment={apartment}
                 isExtracting={isExtracting}
               />

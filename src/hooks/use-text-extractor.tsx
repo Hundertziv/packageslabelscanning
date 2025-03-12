@@ -2,18 +2,23 @@
 import { useState } from "react";
 import { createWorker } from "tesseract.js";
 import { useToast } from "@/hooks/use-toast";
+import { findBestRecipientMatch } from "@/utils/recipient-list";
 
 export const useTextExtractor = () => {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractedText, setExtractedText] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [apartment, setApartment] = useState("");
+  const [matchedRecipients, setMatchedRecipients] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   const resetResults = () => {
     setExtractedText("");
     setRecipientName("");
     setApartment("");
+    setMatchedRecipients([]);
+    setSearchQuery("");
   };
 
   const extractText = async (imageUrl: string) => {
@@ -73,6 +78,10 @@ export const useTextExtractor = () => {
       setRecipientName(foundName || "Not found");
       setApartment(foundApartment || "Not found");
       
+      // Find matching recipients
+      const possibleMatches = findBestRecipientMatch(text);
+      setMatchedRecipients(possibleMatches);
+      
       // Save to history
       saveToHistory({
         id: Date.now().toString(),
@@ -80,14 +89,17 @@ export const useTextExtractor = () => {
         imageUrl,
         extractedText: text,
         recipientName: foundName || "Not found",
-        apartment: foundApartment || "Not found"
+        apartment: foundApartment || "Not found",
+        matchedRecipients: possibleMatches
       });
       
       await worker.terminate();
       
       toast({
         title: "Extraction complete",
-        description: foundName ? `Found recipient: ${foundName}` : "Couldn't identify a clear recipient name",
+        description: possibleMatches.length > 0 
+          ? `Found ${possibleMatches.length} possible recipient matches` 
+          : "Couldn't find matching recipients",
       });
     } catch (error) {
       console.error("Text extraction error:", error);
@@ -115,12 +127,31 @@ export const useTextExtractor = () => {
     }
   };
 
+  const filterRecipients = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) return;
+    
+    // If we have matched recipients, filter them further
+    if (matchedRecipients.length > 0) {
+      const filteredResults = matchedRecipients.filter(
+        name => name.toLowerCase().includes(query.toLowerCase())
+      );
+      return filteredResults;
+    }
+    
+    return [];
+  };
+
   return {
     extractText,
     isExtracting,
     extractedText,
     recipientName,
     apartment,
+    matchedRecipients,
+    searchQuery,
+    setSearchQuery,
+    filterRecipients,
     resetResults
   };
 };
