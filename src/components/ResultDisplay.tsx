@@ -77,14 +77,12 @@ const ResultDisplay = ({
       </div>
       
       <div className="mt-6 pt-4 border-t border-gray-200">
-        <details className="text-sm">
-          <summary className="font-medium text-gray-700 cursor-pointer">
-            Show full extracted text
-          </summary>
-          <div className="mt-2 p-3 bg-gray-50 rounded border text-gray-700 whitespace-pre-wrap text-left">
-            {extractedText || "No text extracted"}
-          </div>
-        </details>
+        <div className="font-medium text-gray-700 mb-2">
+          Full extracted text:
+        </div>
+        <div className="p-3 bg-gray-50 rounded border text-gray-700 whitespace-pre-wrap text-left">
+          {extractedText || "No text extracted"}
+        </div>
       </div>
     </div>
   );
