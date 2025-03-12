@@ -1,8 +1,6 @@
 
 // List of 100 recipient names including the specified ones
 export const recipientList = [
-  "Ellen Bataglia",
-  "Ellen Delon",
   "James Smith",
   "Mary Johnson",
   "Robert Williams",
@@ -12,6 +10,8 @@ export const recipientList = [
   "Michael Miller",
   "Linda Davis",
   "William Rodriguez",
+  "Ellen Bataglia",
+  "Ellen Delon",
   "Elizabeth Martinez",
   "David Hernandez",
   "Barbara Lopez",
