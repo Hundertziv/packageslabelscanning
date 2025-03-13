@@ -27,7 +27,8 @@ const Index = () => {
     searchQuery,
     filterRecipients,
     resetResults,
-    bestMatch
+    bestMatch,
+    barcodeValue
   } = useTextExtractor();
 
   const handleImageUpload = async (imageUrl: string) => {
@@ -158,6 +159,7 @@ const Index = () => {
                 extractedText={extractedText}
                 recipientName={selectedRecipient || bestMatch || recipientName}
                 apartment={apartment}
+                barcodeValue={barcodeValue}
                 isExtracting={isExtracting}
               />
             </CardContent>

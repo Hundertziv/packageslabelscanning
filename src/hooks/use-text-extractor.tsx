@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createWorker } from "tesseract.js";
 import { useToast } from "@/hooks/use-toast";
 import { findBestRecipientMatch } from "@/utils/recipient-list";
+import Quagga from "quagga";
 
 export const useTextExtractor = () => {
   const [isExtracting, setIsExtracting] = useState(false);
@@ -12,6 +13,7 @@ export const useTextExtractor = () => {
   const [matchedRecipients, setMatchedRecipients] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [bestMatch, setBestMatch] = useState<string>("");
+  const [barcodeValue, setBarcodeValue] = useState<string>("");
   const { toast } = useToast();
 
   const resetResults = () => {
@@ -21,6 +23,81 @@ export const useTextExtractor = () => {
     setMatchedRecipients([]);
     setSearchQuery("");
     setBestMatch("");
+    setBarcodeValue("");
+  };
+
+  const detectBarcode = (imageUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      // Create a temporary image element to get image dimensions
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas dimensions to match image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw image on canvas
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+        }
+        
+        // Configure Quagga
+        Quagga.decodeSingle({
+          decoder: {
+            readers: [
+              "code_128_reader",
+              "ean_reader",
+              "ean_8_reader",
+              "code_39_reader",
+              "code_39_vin_reader",
+              "codabar_reader",
+              "upc_reader",
+              "upc_e_reader",
+              "i2of5_reader"
+            ]
+          },
+          locate: true,
+          src: canvas.toDataURL()
+        }, function(result) {
+          if (result && result.codeResult) {
+            console.log("Barcode detected:", result.codeResult.code);
+            resolve(result.codeResult.code);
+          } else {
+            console.log("Barcode detection failed or no barcode found");
+            resolve("");
+          }
+        });
+      };
+      
+      img.src = imageUrl;
+    });
+  };
+
+  // Extract text from barcode patterns in the OCR text
+  const extractBarcodeFromText = (text: string): string => {
+    // Common barcode patterns
+    const patterns = [
+      // UPS, FedEx, USPS, and other common formats
+      /\b(1Z[0-9A-Z]{16})\b/, // UPS
+      /\b(9[0-9]{19,21})\b/, // USPS
+      /\b([0-9]{12,14})\b/, // Common numeric barcodes
+      /\b([0-9]{10})\b/, // 10-digit tracking numbers
+      /\b(9[4-9][0-9]{19})\b/, // USPS IMpb format
+      /\b([0-9]{20,22})\b/, // Long numeric tracking numbers
+      /\b([0-9]{6}-[0-9]{6})\b/, // Hyphenated format
+      /\b([0-9]{4}\s[0-9]{4}\s[0-9]{4})\b/, // Spaced format
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+
+    return "";
   };
 
   const extractText = async (imageUrl: string) => {
@@ -28,6 +105,9 @@ export const useTextExtractor = () => {
     resetResults();
     
     try {
+      // Start barcode detection in parallel with OCR
+      const barcodePromise = detectBarcode(imageUrl);
+      
       // Initialize the worker with proper options object
       const worker = await createWorker({
         logger: m => console.log(m),
@@ -40,7 +120,7 @@ export const useTextExtractor = () => {
       
       toast({
         title: "Processing image",
-        description: "Extracting text from the label...",
+        description: "Extracting text and scanning for barcodes...",
       });
       
       // Extract text from the package label image
@@ -91,6 +171,16 @@ export const useTextExtractor = () => {
         setSearchQuery(bestMatchName);
       }
       
+      // Get barcode detection result
+      let detectedBarcode = await barcodePromise;
+      
+      // If no barcode detected visually, try to extract from text
+      if (!detectedBarcode) {
+        detectedBarcode = extractBarcodeFromText(text);
+      }
+      
+      setBarcodeValue(detectedBarcode || "Not found");
+      
       // Save to history
       saveToHistory({
         id: Date.now().toString(),
@@ -100,7 +190,8 @@ export const useTextExtractor = () => {
         recipientName: foundName || "Not found",
         apartment: foundApartment || "Not found",
         matchedRecipients: possibleMatches,
-        bestMatch: possibleMatches.length > 0 ? possibleMatches[0] : ""
+        bestMatch: possibleMatches.length > 0 ? possibleMatches[0] : "",
+        barcodeValue: detectedBarcode || "Not found"
       });
       
       await worker.terminate();
@@ -163,6 +254,7 @@ export const useTextExtractor = () => {
     setSearchQuery,
     filterRecipients,
     resetResults,
-    bestMatch
+    bestMatch,
+    barcodeValue
   };
 };

@@ -1,12 +1,13 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Home, AlertCircle } from "lucide-react";
+import { User, Home, AlertCircle, Barcode } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ResultDisplayProps {
   extractedText: string;
   recipientName: string;
   apartment: string;
+  barcodeValue?: string;
   isExtracting: boolean;
 }
 
@@ -14,6 +15,7 @@ const ResultDisplay = ({
   extractedText,
   recipientName,
   apartment,
+  barcodeValue = "Not found",
   isExtracting
 }: ResultDisplayProps) => {
   if (isExtracting) {
@@ -22,6 +24,8 @@ const ResultDisplay = ({
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-5 w-28" />
         <Skeleton className="h-12 w-full" />
       </div>
     );
@@ -73,6 +77,24 @@ const ResultDisplay = ({
               No apartment number detected
             </div>
           ) : apartment}
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-blue-700 font-medium">
+          <Barcode className="h-5 w-5" />
+          <h3>Tracking/Barcode ID</h3>
+        </div>
+        <div className={cn(
+          "p-3 rounded-md font-medium text-lg border",
+          barcodeValue === "Not found" ? "text-red-500 border-red-200 bg-red-50" : "border-green-200 bg-green-50 text-green-800"
+        )}>
+          {barcodeValue === "Not found" ? (
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              No barcode detected
+            </div>
+          ) : barcodeValue}
         </div>
       </div>
       
