@@ -42,6 +42,13 @@ const SearchBar = ({
     setFilteredRecipients(matchedRecipients);
   }, [matchedRecipients]);
 
+  // Set the input value when searchQuery changes
+  useEffect(() => {
+    if (inputRef.current && searchQuery) {
+      inputRef.current.value = searchQuery;
+    }
+  }, [searchQuery]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     const results = onSearch(query);

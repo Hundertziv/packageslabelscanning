@@ -11,6 +11,7 @@ export const useTextExtractor = () => {
   const [apartment, setApartment] = useState("");
   const [matchedRecipients, setMatchedRecipients] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [bestMatch, setBestMatch] = useState<string>("");
   const { toast } = useToast();
 
   const resetResults = () => {
@@ -19,6 +20,7 @@ export const useTextExtractor = () => {
     setApartment("");
     setMatchedRecipients([]);
     setSearchQuery("");
+    setBestMatch("");
   };
 
   const extractText = async (imageUrl: string) => {
@@ -82,6 +84,13 @@ export const useTextExtractor = () => {
       const possibleMatches = findBestRecipientMatch(text);
       setMatchedRecipients(possibleMatches);
       
+      // Automatically select the best match (first one from the sorted list)
+      if (possibleMatches.length > 0) {
+        const bestMatchName = possibleMatches[0];
+        setBestMatch(bestMatchName);
+        setSearchQuery(bestMatchName);
+      }
+      
       // Save to history
       saveToHistory({
         id: Date.now().toString(),
@@ -90,7 +99,8 @@ export const useTextExtractor = () => {
         extractedText: text,
         recipientName: foundName || "Not found",
         apartment: foundApartment || "Not found",
-        matchedRecipients: possibleMatches
+        matchedRecipients: possibleMatches,
+        bestMatch: possibleMatches.length > 0 ? possibleMatches[0] : ""
       });
       
       await worker.terminate();
@@ -98,7 +108,7 @@ export const useTextExtractor = () => {
       toast({
         title: "Extraction complete",
         description: possibleMatches.length > 0 
-          ? `Found ${possibleMatches.length} possible recipient matches` 
+          ? `Best match: ${possibleMatches[0]}` 
           : "Couldn't find matching recipients",
       });
     } catch (error) {
@@ -152,6 +162,7 @@ export const useTextExtractor = () => {
     searchQuery,
     setSearchQuery,
     filterRecipients,
-    resetResults
+    resetResults,
+    bestMatch
   };
 };

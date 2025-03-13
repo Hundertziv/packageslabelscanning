@@ -26,7 +26,8 @@ const Index = () => {
     matchedRecipients,
     searchQuery,
     filterRecipients,
-    resetResults 
+    resetResults,
+    bestMatch
   } = useTextExtractor();
 
   const handleImageUpload = async (imageUrl: string) => {
@@ -45,6 +46,13 @@ const Index = () => {
       });
     }
   };
+
+  // This effect will auto-select the best match when it becomes available
+  useState(() => {
+    if (bestMatch && !selectedRecipient) {
+      setSelectedRecipient(bestMatch);
+    }
+  });
 
   const handleSelectRecipient = (recipient: string) => {
     setSelectedRecipient(recipient);
@@ -89,7 +97,7 @@ const Index = () => {
                   <div className="mt-4">
                     <SearchBar
                       matchedRecipients={matchedRecipients}
-                      searchQuery={searchQuery}
+                      searchQuery={bestMatch || searchQuery}
                       onSearch={filterRecipients}
                       onSelect={handleSelectRecipient}
                       isExtracting={isExtracting}
@@ -105,13 +113,13 @@ const Index = () => {
                               key={index}
                               className={cn(
                                 "w-full px-4 py-2 flex items-center text-left hover:bg-blue-50 transition-colors",
-                                selectedRecipient === recipient && "bg-blue-50"
+                                (selectedRecipient === recipient || (!selectedRecipient && index === 0)) && "bg-blue-50"
                               )}
                               onClick={() => handleSelectRecipient(recipient)}
                             >
                               <User className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
                               <span className="flex-grow">{recipient}</span>
-                              {selectedRecipient === recipient && (
+                              {(selectedRecipient === recipient || (!selectedRecipient && index === 0)) && (
                                 <span className="flex-shrink-0 ml-2">
                                   <Check className="h-4 w-4 text-green-500" />
                                 </span>
@@ -142,13 +150,13 @@ const Index = () => {
               <CardDescription>
                 {selectedRecipient 
                   ? `Selected recipient: ${selectedRecipient}`
-                  : "Recipient details extracted from the label"}
+                  : bestMatch ? `Best match: ${bestMatch}` : "Recipient details extracted from the label"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ResultDisplay 
                 extractedText={extractedText}
-                recipientName={selectedRecipient || recipientName}
+                recipientName={selectedRecipient || bestMatch || recipientName}
                 apartment={apartment}
                 isExtracting={isExtracting}
               />
