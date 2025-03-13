@@ -43,7 +43,7 @@ const ResultDisplay = ({
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-blue-700 font-medium">
           <User className="h-5 w-5" />
-          <h3>Recipient Name</h3>
+          <h3>Most potential recipient name found</h3>
         </div>
         <div className={cn(
           "p-3 rounded-md font-medium text-lg border",
